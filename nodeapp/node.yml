@@ -12,7 +12,7 @@
   tasks:
   - name: creating nodesetup directory
     file:
-      path:"{{folderpath}}"
+      path: "{{folderpath}}"
       state: dir
       mode: 0755
   - name: download node js package
