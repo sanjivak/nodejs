@@ -9,17 +9,58 @@
   become: yes
   vars:
     folderpath: /home/ansible/nodesetup
+    appserverport: 8080
+    app_ip: 172.31.23.239
   tasks:
   - name: creating nodesetup directory
     file:
-      path: "{{folderpath}}"
-      state: dir
+      path: "{{ folderpath }}"
+      state: directory
       mode: 0755
   - name: download node js package
-    command: "curl -sL https://deb.nodesource.com/setup_8.x -o {{folderpath}} /nodesource_setup.sh"
+    command: "curl -sL https://deb.nodesource.com/setup_8.x -o {{ folderpath }} /nodesource_setup.sh"
   - name: Execute downloaded shellscript
-    command: sudo bash {{folderpath}} /nodesource_setup.sh
+    command: sudo bash {{ folderpath }} /nodesource_setup.sh
   - name: "installing node js"
     apt:
-      name: node js
+      name: nodejs
       state: present
+  - name: copy the code
+    template:
+      src: "templates/hello.js.j2"
+      dest: "{{ folderpath }}"/hello.js"
+  - name: install pm2
+    npm:
+      name: pm2
+      global: yes
+  - name: "start node js app"
+    command: "pm2 start {{ folderpath }}/hello.js"
+
+
+- hosts: web
+  become: yes
+  vars:
+    webserver_dns_name: ec2-34-216-166-114.us-west-2.compute.amazonaws.com
+    appserver_ip: 172.31.23.239
+  tasks:
+  - name: install nginx
+    apt:
+      name: nginx
+      state: present
+  - name: copy default file
+    template:
+      src: "templates/default.j2"
+      dest: /etc/nginx/sites-available/default
+    notify: restart nginx
+  handlers:
+  -  name: restart nginx
+     service:
+       name: nginx
+       state: restarted
+     
+
+
+
+
+    
+    
